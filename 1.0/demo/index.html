@@ -5,29 +5,110 @@
     <title>limitfixed的demo</title>
     <script src="http://g.tbcdn.cn/kissy/k/1.3.0/kissy-min.js" charset="utf-8"></script>
     <link rel="stylesheet" href="http://g.tbcdn.cn/kissy/k/1.3.0/css/dpl/base-min.css">
+    <link rel="stylesheet" href="./demo.css"/>
 </head>
 <body>
-<h2>limitfixed的demo</h2>
+<h2>LimitFixed组件的demo</h2>
 
-<script>
-    var S = KISSY;
-    if (S.Config.debug) {
-        var srcPath = "../../../";
-        S.config({
-            packages:[
-                {
-                    name:"gallery",
-                    path:srcPath,
-                    charset:"utf-8",
-                    ignorePackageNameInUri:true
-                }
-            ]
-        });
-    }
+<h3>纵横都fixed示例</h3>
+<div id="J_LimitBox" data-align="bottom,left" class="limitbox fixed">
+    <div data-align="left top" data-offset="0,-20" class="fixed">fixed left top</div>
+    <div data-align="left bottom" class="fixed">fixed left bottom</div>
+    <div data-align="right top" class="fixed">fixed right top</div>
+    <div data-align="right bottom" data-offset="0,20"  class="fixed">fixed right bottom</div>
+    <div data-align="left top" data-offset="110,0" class="info fixed">
+        请缩小窗口，使得横向滚动条出现。<br />
+        可以查看横向滚动的示例Demo。<br />
+        Enjoy ^_^ ~
+    </div>
+</div>
 
-    S.use('gallery/limitfixed/1.0/index', function (S, Limitfixed) {
-         var limitfixed = new Limitfixed();
-    })
-</script>
+<h3>横向fixed示例</h3>
+<div id="J_Carousel" class="carousel">
+    <div class="slide">
+        <div class="caption">第一个区块</div>
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+    </div>
+    <div class="slide">
+        <div class="caption">第二个区块</div>
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+    </div>
+    <div class="slide">
+        <div class="caption">第三个区块</div>
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+        <br />
+        <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
+    </div>
+</div>
+
+<h3>纵向fixed示例</h3>
+<div id="J_ShelfBox" class="shelfbox">
+    <div class="floor">
+        <div class="caption">A</div>
+        <ul>
+            <li>阿</li>
+            <li>阿迪达斯男鞋</li>
+            <li>阿迪达斯</li>
+            <li>按摩器</li>
+            <li>阿迪达斯t恤</li>
+            <li>奥特曼</li>
+            <li>阿迪达斯 女鞋</li>
+            <li>艾格专柜正品</li>
+            <li>爱马仕皮带</li>
+        </ul>
+    </div>
+    <div class="floor">
+        <div class="caption">B</div>
+        <ul>
+            <li>包包2013新款</li>
+            <li>包</li>
+            <li>保护套</li>
+            <li>冰箱</li>
+            <li>包包</li>
+            <li>抱枕</li>
+            <li>杯子</li>
+            <li>笔袋</li>
+            <li>半身裙</li>
+        </ul>
+    </div>
+    <div class="floor">
+        <div class="caption">C</div>
+        <ul>
+            <li>充电宝</li>
+            <li>窗帘</li>
+            <li>床</li>
+            <li>按摩器</li>
+            <li>长裙</li>
+            <li>充气娃真人实体</li>
+            <li>床垫</li>
+            <li>茶具</li>
+            <li>床上用品四件套</li>
+        </ul>
+    </div>
+</div>
+
+<script type="text/javascript" src="./demo.js"></script>
 </body>
 </html>

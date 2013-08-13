@@ -1,13 +1,13 @@
 {
     "name": "limitfixed",
-    "version": "1.0",
+    "version": "0.5",
     "desc": "",
     "cover": "",
     "tag":"",
     "author": {
         "name": "wuake",
         "email": "wgk1987@gmail.com",
-        "page": ""
+        "page": "https://github.com/akecn/"
     },
     "type": "kissy-gallery",
     "type-url": "http://gallery.kissyui.com/guide"
