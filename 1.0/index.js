@@ -14,7 +14,6 @@
     holder: true
   });
 
-  TODO 不实时计算。在某些范围内，fixed模式下，可以不设置style。
   TODO 文档注释？@lends Limitfixed
   TODO 内部进行事件注册
 */
@@ -128,15 +127,20 @@ KISSY.add(function(S, D, E) {
       if (range === null) {
         this._setFixed(false);
       } else {
-        this._setFixed(true);
         offset = this._getPosition(range, limitRange, viewRange);
-        if (true) {
-          offset = this._calPosition(offset, range, limitRange, viewRange);
+        if (this._fixedType && (offset.top > limitRange.top && parseInt(range.top) === parseInt(offset.top)) && (offset.left > limitRange.left && parseInt(range.left) === parseInt(offset.left)) && this.isFixed && this.fixedRange) {
+          offset = null;
+        } else {
+          this.fixedRange = offset = this._calPosition(offset, range, limitRange, viewRange);
         }
+        this._setFixed(true);
       }
       return this._applyStyle(offset);
     },
     _setFixed: function(fixed) {
+      if (fixed === this.isFixed) {
+        return;
+      }
       this.isFixed = fixed;
       return this.fire('fixed', {
         isFixed: fixed

@@ -13,7 +13,6 @@
     holder: true
   });
 
-  TODO 不实时计算。在某些范围内，fixed模式下，可以不设置style。
   TODO 文档注释？@lends Limitfixed
   TODO 内部进行事件注册
 ###
@@ -149,14 +148,20 @@ KISSY.add (S, D, E) ->
       if range == null
         @_setFixed false
       else
-        @_setFixed true
         offset = @_getPosition(range, limitRange, viewRange)
-        if true
-          offset = @_calPosition offset, range, limitRange, viewRange
+        # 横向和纵向，在position:fixed模式下，如果处于fixed状态且“置顶”时，这个时候坐标是不变化的。不需要另外去计算和设置，避免无谓的dom操作
+        if @_fixedType and (offset.top > limitRange.top and parseInt(range.top) == parseInt(offset.top)) and (offset.left > limitRange.left and parseInt(range.left) == parseInt(offset.left)) and @isFixed and @fixedRange
+          offset = null
+        else
+          @fixedRange = offset = @_calPosition offset, range, limitRange, viewRange
+        @_setFixed true
 
       @_applyStyle offset
 
     _setFixed: (fixed) ->
+      if fixed == @isFixed
+        return
+
       @isFixed = fixed
 
       @fire 'fixed',
