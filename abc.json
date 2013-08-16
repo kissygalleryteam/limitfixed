@@ -1,14 +1,15 @@
 {
-    "name": "limitfixed",
-    "version": "1.0",
-    "desc": "",
-    "cover": "",
+    "name":"LimitFixed",
+    "version":"1.0",
+    "desc":"在指定容器中相对页面定位。实现fixed效果。",
+    "cover":"",
     "tag":"",
-    "author": {
-        "name": "wuake",
-        "email": "wgk1987@gmail.com",
-        "page": "https://github.com/akecn/"
-    },
-    "type": "kissy-gallery",
-    "type-url": "http://gallery.kissyui.com/guide"
+    "author":{
+    "name":"wuake",
+    "email":"wgk1987@gmail.com",
+    "page":"https://github.com/akecn/"
+},
+    "type":"kissy-gallery",
+    "type-url":"http://gallery.kissyui.com/guide",
+    "githubName":"akecn"
 }
