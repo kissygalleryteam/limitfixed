@@ -5,20 +5,20 @@
  * @module limitfixed
 */
 
-KISSY.add(function(S, D, E) {
-  /*
-    new LimitFixed(fixedElement, limitElement, {
-      align: [],
-      offset: []
-      holder: true
-    });
-  
-    TODO 缓存range结果
-    TODO 不实时计算。在某些范围内，fixed模式下，可以不设置style。
-    TODO 兼容ios？ -webkit-transform: translate3d(0px, -22px, 0px)
-    TODO 文档注释？@lends Limitfixed
-  */
+/*
+  usage
 
+  new LimitFixed(fixedElement, limitElement, {
+    align: [],
+    offset: []
+    holder: true
+  });
+
+  TODO 文档注释？@lends Limitfixed
+  TODO 内部进行事件注册
+*/
+
+KISSY.add(function(S, D, E) {
   var LimitFixed, UA, def, doc, isIE6;
   doc = document;
   UA = S.UA;
@@ -29,7 +29,10 @@ KISSY.add(function(S, D, E) {
     shim: false,
     holder: false,
     holderCls: "limitfixed-holder",
-    forceAbs: false
+    forceAbs: false,
+    mobile: false,
+    cache: false,
+    points: [0, 0]
   };
   /*
     @class Limitfixed
@@ -46,64 +49,59 @@ KISSY.add(function(S, D, E) {
       this.elLimit = D.get(elLimit);
       this.isFixed = false;
       this._fixedType = isIE6 ? false : !this.cfg.forceAbs;
-      this._bindEvent();
+      this._limitRange;
       if (this.cfg.holder) {
         this._buildHolder();
       }
       return this.scroll();
     },
-    _bindEvent: function() {
-      var _this = this;
-      return this.on('fixed', function(ev) {
-        var fixed;
-        fixed = ev.isFixed;
-        if (fixed) {
-          return D.show(_this.elFixed);
-        } else {
-          return D.hide(_this.elFixed);
-        }
-      });
-    },
     _buildHolder: function() {
-      var cls, holder;
+      var cls, holder,
+        _this = this;
       cls = this.cfg.holderCls || "";
       holder = D.create("<div class='" + cls + "'></div>");
       D.height(holder, D.outerHeight(this.elFixed));
       D.width(holder, D.outerWidth(this.elFixed));
-      return D.insertBefore(holder, this.elFixed);
-    },
-    setFixed: function(fixed) {
-      this.isFixed = fixed;
-      return this.fire('fixed', {
-        isFixed: fixed
+      D.insertBefore(holder, this.elFixed);
+      return this.on('fixed', function(ev) {
+        var fixed;
+        fixed = ev.isFixed;
+        if (fixed) {
+          return D.show(holder);
+        } else {
+          return D.hide(holder);
+        }
       });
     },
     scroll: function() {
       var limitRange, range, viewRange;
-      viewRange = this._getRange();
-      limitRange = this._getRange(this.elLimit);
+      viewRange = this.getViewRange();
+      limitRange = this.getLimitRange();
       range = this._getCrossRange(viewRange, limitRange);
-      return this.setPosition(range, limitRange, viewRange);
+      return this._setPosition(range, limitRange, viewRange);
+    },
+    getViewRange: function() {
+      return {
+        left: D.scrollLeft(doc),
+        top: D.scrollTop(doc),
+        width: D.viewportWidth(),
+        height: D.viewportHeight()
+      };
+    },
+    getLimitRange: function(force) {
+      if (!this._limitRange || force || !this.cfg.cache) {
+        this._limitRange = this._getRange(this.elLimit);
+      }
+      return this._limitRange;
     },
     _getRange: function(elem) {
-      var height, left, offset, top, width;
-      if (elem) {
-        offset = D.offset(elem);
-        left = offset.left;
-        top = offset.top;
-        width = D.outerWidth(elem);
-        height = D.outerHeight(elem);
-      } else {
-        left = D.scrollLeft(doc);
-        top = D.scrollTop(doc);
-        width = D.viewportWidth();
-        height = D.viewportHeight();
-      }
+      var offset;
+      offset = D.offset(elem);
       return {
-        top: top,
-        height: height,
-        left: left,
-        width: width
+        left: offset.left,
+        top: offset.top,
+        width: D.outerWidth(elem),
+        height: D.outerHeight(elem)
       };
     },
     _getCrossRange: function(range1, range2) {
@@ -124,38 +122,85 @@ KISSY.add(function(S, D, E) {
       }
       return rt;
     },
-    setPosition: function(range, limitRange, viewRange) {
-      var style;
+    _setPosition: function(range, limitRange, viewRange) {
+      var offset;
       if (range === null) {
-        this.setFixed(false);
-        style = {
-          position: "static",
-          zIndex: ""
+        this._setFixed(false);
+      } else {
+        offset = this._getPosition(range, limitRange, viewRange);
+        if (this._fixedType && (offset.top > limitRange.top && parseInt(range.top) === parseInt(offset.top)) && (offset.left > limitRange.left && parseInt(range.left) === parseInt(offset.left)) && this.isFixed && this.fixedRange) {
+          offset = null;
+        } else {
+          this.fixedRange = offset = this._calPosition(offset, range, limitRange, viewRange);
+        }
+        this._setFixed(true);
+      }
+      return this._applyStyle(offset);
+    },
+    _setFixed: function(fixed) {
+      if (fixed === this.isFixed) {
+        return;
+      }
+      this.isFixed = fixed;
+      return this.fire('fixed', {
+        isFixed: fixed
+      });
+    },
+    _getPosition: function(range, limitRange, viewRange) {
+      var align, fixedHeight, fixedWidth, left, top;
+      align = this._getAlign();
+      fixedHeight = D.outerHeight(this.elFixed);
+      fixedWidth = D.outerWidth(this.elFixed);
+      if (align.topFixed) {
+        top = Math.min(range.top, limitRange.top + limitRange.height - fixedHeight);
+      } else if (align.bottomFixed) {
+        top = Math.max(range.top + range.height - fixedHeight, limitRange.top);
+      } else if (align.topStatic) {
+        top = Math.min(range.top, limitRange.top);
+      } else if (align.bottomStatic) {
+        top = Math.max(range.top + range.height - fixedHeight, limitRange.top + limitRange.height - fixedHeight);
+      }
+      if (align.leftFixed) {
+        left = Math.min(range.left, limitRange.left + limitRange.width - fixedWidth);
+      } else if (align.rightFixed) {
+        left = Math.max(range.left + range.width - fixedWidth, limitRange.left);
+      } else if (align.leftStatic) {
+        left = Math.min(range.left, limitRange.left);
+      } else if (align.rightStatic) {
+        left = Math.max(range.left + range.width - fixedWidth, limitRange.left + limitRange.width - fixedWidth);
+      }
+      return {
+        left: left,
+        top: top
+      };
+    },
+    _calPosition: function(align, range, limitRange, viewRange) {
+      var custom, offset, relativeParentContainer;
+      if (this._fixedType) {
+        offset = {
+          left: viewRange.left,
+          top: viewRange.top
         };
       } else {
-        this.setFixed(true);
-        style = this._calPosition(range, limitRange, viewRange);
+        relativeParentContainer = D.parent(this.elLimit, function(el) {
+          return S.inArray(D.css(el, 'position'), ['relative', 'absolute']);
+        });
+        offset = {
+          left: 0,
+          top: 0
+        };
+        if (relativeParentContainer) {
+          offset = D.offset(relativeParentContainer);
+        } else if (D.contains(this.elLimit, this.elFixed) && S.inArray(D.css(this.elLimit, 'position'), ['relative', 'absolute'])) {
+          offset = D.offset(this.elLimit);
+        }
       }
-      return D.css(this.elFixed, style);
-    },
-    _calPosition: function(range, limitRange, viewRange) {
-      var align, offset, style;
-      style = {
-        "zIndex": this._getZIndex()
-      };
-      if (this._fixedType) {
-        align = this._calFixPosition(range, limitRange, viewRange);
-        style.position = 'fixed';
-      } else {
-        align = this._calAbsPosition(range, limitRange, viewRange);
-        style.position = 'absolute';
-      }
-      offset = this._getOffset();
-      if (offset) {
-        align.left = align.left + (offset.left || 0);
-        align.top = align.top + (offset.top || 0);
-      }
-      return S.mix(style, align);
+      align.left -= offset.left;
+      align.top -= offset.top;
+      custom = this._getOffset();
+      align.left = align.left + (custom.left || 0);
+      align.top = align.top + (custom.top || 0);
+      return align;
     },
     _getZIndex: function() {
       var zindex;
@@ -203,74 +248,19 @@ KISSY.add(function(S, D, E) {
       }
       return align;
     },
-    _calFixPosition: function(range, limitRange, viewRange) {
-      var align, fixedHeight, fixedWidth, left, top;
-      align = this._getAlign();
-      fixedHeight = D.outerHeight(this.elFixed);
-      fixedWidth = D.outerWidth(this.elFixed);
-      if (align.topFixed) {
-        top = Math.min(range.top - viewRange.top, limitRange.top + limitRange.height - fixedHeight - viewRange.top);
-      } else if (align.bottomFixed) {
-        top = Math.max(range.top + range.height - fixedHeight - viewRange.top, limitRange.top - viewRange.top);
-      } else if (align.topStatic) {
-        top = Math.min(range.top - viewRange.top, limitRange.top - viewRange.top);
-      } else if (align.bottomStatic) {
-        top = Math.max(range.top + range.height - fixedHeight - viewRange.top, limitRange.top + limitRange.height - fixedHeight - viewRange.top);
+    _applyStyle: function(offset) {
+      var style;
+      if (!this.isFixed) {
+        style = {
+          position: "static"
+        };
+      } else {
+        style = {
+          position: this._fixedType ? 'fixed' : 'absolute',
+          zIndex: this._getZIndex()
+        };
       }
-      if (align.leftFixed) {
-        left = Math.min(range.left - viewRange.left, limitRange.left + limitRange.width - fixedWidth - viewRange.left);
-      } else if (align.rightFixed) {
-        left = Math.max(range.left + range.width - fixedWidth - viewRange.left, limitRange.left - viewRange.left);
-      } else if (align.leftStatic) {
-        left = Math.min(range.left - viewRange.left, limitRange.left - viewRange.left);
-      } else if (align.rightStatic) {
-        left = Math.max(range.left + range.width - fixedWidth - viewRange.left, limitRange.left + limitRange.width - fixedWidth - viewRange.left);
-      }
-      return {
-        left: left,
-        top: top
-      };
-    },
-    _calAbsPosition: function(range, limitRange, viewRange) {
-      var align, fixedHeight, fixedWidth, left, offset, relativeParentContainer, top;
-      relativeParentContainer = D.parent(this.elLimit, function(el) {
-        return S.inArray(D.css(el, 'position'), ['relative', 'absolute']);
-      });
-      offset = {
-        left: 0,
-        top: 0
-      };
-      if (relativeParentContainer) {
-        offset = D.offset(relativeParentContainer);
-      } else if (D.contains(this.elLimit, this.elFixed) && S.inArray(D.css(this.elLimit, 'position'), ['relative', 'absolute'])) {
-        offset = D.offset(this.elLimit);
-      }
-      fixedHeight = D.outerHeight(this.elFixed);
-      fixedWidth = D.outerWidth(this.elFixed);
-      align = this._getAlign();
-      if (align.topFixed) {
-        top = Math.min(range.top, limitRange.top + limitRange.height - fixedHeight) - offset.top;
-      } else if (align.bottomFixed) {
-        top = Math.max(range.top + range.height - fixedHeight, limitRange.top) - offset.top;
-      } else if (align.topStatic) {
-        top = Math.min(limitRange.top + viewRange.top, limitRange.top) - offset.top;
-      } else if (align.bottomStatic) {
-        top = Math.max(range.top + range.height - fixedHeight, limitRange.top + limitRange.height - fixedHeight) - offset.top;
-      }
-      if (align.leftFixed) {
-        left = Math.min(range.left, limitRange.left + limitRange.width - fixedWidth) - offset.left;
-      } else if (align.rightFixed) {
-        left = Math.max(range.left + range.width - fixedWidth, limitRange.left) - offset.left;
-      } else if (align.leftStatic) {
-        console && console.log(Math.min(limitRange.left + viewRange.left, limitRange.left), limitRange.left, offset.left);
-        left = Math.min(limitRange.left + viewRange.left, limitRange.left) - offset.left;
-      } else if (align.rightStatic) {
-        left = Math.max(range.left + range.width - fixedWidth, limitRange.left + limitRange.width - fixedWidth) - offset.left;
-      }
-      return {
-        left: left,
-        top: top
-      };
+      return D.css(this.elFixed, S.mix(style, offset));
     },
     _buildIEShim: function() {}
   });

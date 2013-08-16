@@ -23,11 +23,21 @@ S.use('gallery/limitfixed/1.0/index, node, event', function (S, LimitFixed, Node
             offset = $(el).attr('data-offset') || "",
             zIndex = $(el).attr('data-offset');
 
-        var limitfixed = new LimitFixed(el, nodeLimit, {
+        var lf = new LimitFixed(el, nodeLimit, {
             align: align.split(','),
             offset: offset ? offset.split(',') : []
         });
-        lfs.push(limitfixed);
+
+        lf.on('fixed', function(ev) {
+            var isFixed = ev.isFixed;
+            if(isFixed) {
+                $(lf.elFixed).show();
+            }else {
+                $(lf.elFixed).hide();
+            }
+        });
+
+        lfs.push(lf);
     });
 
     $('.slide', '#J_Carousel').each(function(elSlide) {
