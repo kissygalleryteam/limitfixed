@@ -112,3 +112,14 @@ ul, li{
     -webkit-user-select: none;
     user-select: none;
 }
+
+#totop {
+    background-color: graytext;
+    border: 1px solid gray;
+    padding: 10px;
+    color: #fff;
+}
+#totop i {
+    font-weight: 700;
+    font-size: 14px;
+}

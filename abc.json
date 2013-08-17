@@ -1,5 +1,5 @@
 {
-    "name":"LimitFixed",
+    "name":"limitfixed",
     "version":"1.0",
     "desc":"在指定容器中相对页面定位。实现fixed效果。",
     "cover":"",
