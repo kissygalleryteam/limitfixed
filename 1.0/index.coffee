@@ -73,7 +73,7 @@ KISSY.add (S, D, E) ->
 
     _buildHolder: () ->
       cls = @cfg.holderCls || ""
-      holder = D.create("<div class='#{cls}'></div>");
+      holder = @elHolder = D.create("<div class='#{cls}'></div>");
 
       D.height holder, D.outerHeight(@elFixed)
       D.width holder, D.outerWidth(@elFixed)
