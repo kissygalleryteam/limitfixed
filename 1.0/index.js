@@ -56,7 +56,7 @@ KISSY.add(function(S, D, E) {
       var cls, holder,
         _this = this;
       cls = this.cfg.holderCls || "";
-      holder = D.create("<div class='" + cls + "'></div>");
+      holder = this.elHolder = D.create("<div class='" + cls + "'></div>");
       D.height(holder, D.outerHeight(this.elFixed));
       D.width(holder, D.outerWidth(this.elFixed));
       D.insertBefore(holder, this.elFixed);
