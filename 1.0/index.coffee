@@ -28,7 +28,7 @@ KISSY.add (S, D, E) ->
     # 固定元素设置位置偏移
     offset: [0, 0]
     # TODO 是否设置shim层（ie6）
-    shim: false
+#    shim: false
     # 是否在elFixed位置创建占位元素。
     holder: false
     # 自定义占位元素的className
@@ -36,11 +36,11 @@ KISSY.add (S, D, E) ->
     # 是否强制使用绝对定位计算（ie6不支持fixed样式定义，使用absolute模拟。需要计算相对父容器的位置。）
     forceAbs: false
     # TODO 是否针对移动设备优化（ios，-webkit-transform: translate3d(0px, -22px, 0px)）
-    mobile: false
+#    mobile: false
     # 是否缓存elLimit的位置信息。
     cache: false
-    # TODO 预判的偏移量
-    points: [0, 0]
+#    TODO 预判的偏移量
+#    points: [0, 0]
 
   ###
     @class Limitfixed
@@ -93,19 +93,35 @@ KISSY.add (S, D, E) ->
       limitRange = @getLimitRange()
       range = @_getCrossRange viewRange, limitRange
 
-      #TODO 判断是否需要设置样式
-      @_setPosition range, limitRange, viewRange
+      # 设置元素的位置
+      if range == null
+        @_setFixed false
+      else
+        offset = @_getAbsPosition(range, limitRange)
+        # 横向和纵向，在position:fixed模式下，如果处于fixed状态且“置顶”时，这个时候坐标是不变化的。不需要另外去计算和设置，避免无谓的dom操作
+        if @_fixedType and (offset.top > limitRange.top and parseInt(range.top) == parseInt(offset.top)) and (offset.left > limitRange.left and parseInt(range.left) == parseInt(offset.left)) and @isFixed and @fixedRange
+          offset = null
+        else
+          @fixedRange = offset = @_calPosition offset, range, limitRange, viewRange
+        @_setFixed true
 
-    # 获取传入元素的配置的矩形数据。若没传入，默认是当前视图。（而不是document/body）
+      @_applyStyle offset
+
+    # 获取当前视图的矩形数据。
     getViewRange: () ->
+      left = D.scrollLeft doc
+      top = D.scrollTop doc
+      width = D.viewportWidth()
+      height = D.viewportHeight()
 
       return {
-        left: D.scrollLeft doc
-        top: D.scrollTop doc
-        width: D.viewportWidth()
-        height: D.viewportHeight()
+        left: left
+        top: top
+        width: width
+        height: height
       }
 
+    # 获取传入元素的矩形数据。
     getLimitRange: (force) ->
       if not @_limitRange or force or not @cfg.cache
         @_limitRange = @_getRange @elLimit
@@ -143,21 +159,21 @@ KISSY.add (S, D, E) ->
 
       return rt
 
-    # 设置元素的位置
-    _setPosition: (range, limitRange, viewRange) ->
-      if range == null
-        @_setFixed false
-      else
-        offset = @_getPosition(range, limitRange, viewRange)
-        # 横向和纵向，在position:fixed模式下，如果处于fixed状态且“置顶”时，这个时候坐标是不变化的。不需要另外去计算和设置，避免无谓的dom操作
-        if @_fixedType and (offset.top > limitRange.top and parseInt(range.top) == parseInt(offset.top)) and (offset.left > limitRange.left and parseInt(range.left) == parseInt(offset.left)) and @isFixed and @fixedRange
-          offset = null
-        else
-          @fixedRange = offset = @_calPosition offset, range, limitRange, viewRange
-        @_setFixed true
+    # 获取两个矩形的并集的最小矩形
+    _getUnionRange: (range1, range2) ->
+      x1 = Math.min(range1.left, range2.left)
+      y1 = Math.min(range1.top, range2.top)
+      x2 = Math.max(range1.left + range1.width, range2.left + range2.width)
+      y2 = Math.max(range1.top + range1.height, range2.top + range2.height)
 
-      @_applyStyle offset
+      return {
+        left: x1
+        top: y1,
+        width: x2 - x1
+        height: y2 - y1
+      }
 
+    # 设置当前elFixed元素是否fixed状态，并触发事件
     _setFixed: (fixed) ->
       if fixed == @isFixed
         return
@@ -167,21 +183,25 @@ KISSY.add (S, D, E) ->
       @fire 'fixed',
         isFixed: fixed
 
-    _getPosition: (range, limitRange, viewRange) ->
+    # 获取fixed元素的相对页面左上角的位置信息（left/top）。
+    _getAbsPosition: (range, limitRange) ->
       align = @_getAlign()
       fixedHeight = D.outerHeight @elFixed
       fixedWidth = D.outerWidth @elFixed
 
+      limitRight = limitRange.left + limitRange.width
+      limitBottom = limitRange.top + limitRange.height
+      rangeRight = range.left + range.width
+      rangeBottom = range.top + range.height
+
       # 纵向操作
       if align.topFixed
         #      靠上
-        top = Math.min(range.top,
-          limitRange.top + limitRange.height - fixedHeight)
+        top = Math.min(range.top, limitBottom - fixedHeight)
 
       else if align.bottomFixed
         #      靠下
-        top = Math.max(range.top + range.height - fixedHeight,
-          limitRange.top)
+        top = Math.max(rangeBottom - fixedHeight, limitRange.top)
 
       else if align.topStatic
         #      靠上
@@ -189,18 +209,15 @@ KISSY.add (S, D, E) ->
 
       else if align.bottomStatic
         #      靠下
-        top = Math.max(range.top + range.height - fixedHeight,
-          limitRange.top + limitRange.height - fixedHeight)
+        top = Math.max(rangeBottom - fixedHeight, limitBottom - fixedHeight)
 
       if align.leftFixed
         #      靠左
-        left = Math.min(range.left,
-          limitRange.left + limitRange.width - fixedWidth)
+        left = Math.min(range.left, limitRight - fixedWidth)
 
       else if align.rightFixed
         #      靠右
-        left = Math.max(range.left + range.width - fixedWidth,
-          limitRange.left)
+        left = Math.max(rangeRight - fixedWidth, limitRange.left)
 
       else if align.leftStatic
         #      靠左
@@ -208,8 +225,7 @@ KISSY.add (S, D, E) ->
 
       else if align.rightStatic
         #      靠右
-        left = Math.max(range.left + range.width - fixedWidth,
-          limitRange.left + limitRange.width - fixedWidth)
+        left = Math.max(rangeRight - fixedWidth, limitRight - fixedWidth)
 
       return {
         left: left
@@ -242,16 +258,10 @@ KISSY.add (S, D, E) ->
 
       # 传入的偏移量
       custom = @_getOffset()
-
-      align.left = align.left + (custom.left || 0)
-      align.top = align.top + (custom.top || 0)
+      align.left += (custom.left || 0)
+      align.top += (custom.top || 0)
 
       return align
-
-    _getZIndex: () ->
-      zindex = D.css(@elFixed, 'z-index');
-
-      return @cfg.zIndex || parseInt(zindex, 10) || 999
 
     _getOffset: () ->
       cfg = @cfg.offset
@@ -297,7 +307,6 @@ KISSY.add (S, D, E) ->
       if stati.indexOf('bottom') != -1
         align.bottomStatic = true
 
-#      console && console.log(align);
       return align
 
     _applyStyle: (offset) ->
@@ -308,15 +317,50 @@ KISSY.add (S, D, E) ->
       else
         style =
           position: if @_fixedType then 'fixed' else 'absolute'
-          zIndex: @_getZIndex()
 
       D.css @elFixed, S.mix(style, offset)
 
     # ie6的遮罩层
-    _buildIEShim: () ->
+#    _buildIEShim: () ->
 
 
+  ###
+    管理对象
+  ###
 
-  return LimitFixed
+  Manager = (@def) ->
+    @collection = []
+
+    E.on window, 'scroll resize', () =>
+      S.each @collection, (it) ->
+        it.scroll()
+
+    return
+
+  S.augment Manager,
+    add: (elFixed, elLimit, cfg) ->
+      if not cfg and S.isPlainObject(elLimit)
+        cfg = elLimit
+
+        elLimit = if S.UA.chrome then doc.body else doc.documentElement
+
+      if not elFixed or not elLimit
+        return
+
+      cfg = S.merge @def, cfg
+
+      instance = new LimitFixed(elFixed, elLimit, cfg)
+      @collection.push instance
+
+      return instance
+
+
+  manager = new Manager()
+  exports = (elFixed, elLimit, cfg) ->
+    return manager.add elFixed, elLimit, cfg
+
+#  exports.Manager = Manager
+
+  return exports
 ,
   requires: ['dom', 'event']
