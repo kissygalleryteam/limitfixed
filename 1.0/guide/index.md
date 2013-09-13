@@ -10,6 +10,14 @@ LimitFixed让你快速设置元素的浮动效果，很简单。
 
 ### 使用示例
 
+    KISSY.use('gallery/limitfixed/1.0/index',function (S,Limitfixed) {
+        // elFixed是要浮动的元素。
+        // elLimit是浮动的容器，确定了elFixed元素的浮动范围。若不传则默认为document对象
+        var limitfixed = new Limitfixed(elFixed, elLimit);
+    });
+
+### 参数详解
+
     S.use('gallery/limitfixed/1.0/index', function (S, Limitfixed) {
          // elFixed是要浮动的元素。
          // elLimit是浮动的容器，确定了elFixed元素的浮动范围。若不传则默认为document对象
