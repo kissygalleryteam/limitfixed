@@ -276,8 +276,8 @@ KISSY.add (S, D, E) ->
     _getAlign: () ->
       cfg = S.makeArray @cfg.align
 
-      stati = (cfg[1] || "").split(" ")
-      fixed = cfg[0]
+      stati = cfg[1] || ""
+      fixed = cfg[0] || ""
 
       align = {}
 
