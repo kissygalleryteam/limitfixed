@@ -49,10 +49,6 @@ LimitFixed让你快速设置元素的浮动效果，很简单。
          });
     });
 
-### Demo展示
-
-[Demo](../../demo/index.html)
-
 ## API说明
 
 ### 构造参数
