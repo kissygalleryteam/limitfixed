@@ -1,15 +1,17 @@
 {
-    "name":"limitfixed",
-    "version":"1.0",
-    "desc":"在指定容器中相对页面定位。实现fixed效果。",
-    "cover":"",
-    "tag":"元素浮动,fixed兼容",
-    "author":{
-    "name":"wuake",
-    "email":"wgk1987@gmail.com",
-    "page":"https://github.com/akecn/"
-},
-    "type":"kissy-gallery",
-    "type-url":"http://gallery.kissyui.com/guide",
-    "githubName":"akecn"
+    "name": "limitfixed",
+    "comName":"Limitfixed",
+    "version": "1.1",
+    "desc": "",
+    "tag":"",
+    "githubName":"akecn",
+    "author": {
+        "name": "阿克",
+        "email": "ake.wgk@taobao.com",
+        "page": ""
+    },
+	"flexComboPort":"8081",
+	"reserveServerPort":"8080",
+    "type": "kissy-gallery",
+    "type-url": "http://gallery.kissyui.com/guide"
 }

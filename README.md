@@ -1,9 +1,8 @@
-## LimitFixed
+## limitfixed
 
-* 作者：阿克 wgk1987@gmail.com
-* 版本：1.0
-* 教程：[http://gallery.kissyui.com/limitfixed/1.0/guide/index.html](http://gallery.kissyui.com/limitfixed/1.0/guide/index.html)
-* demo：[http://gallery.kissyui.com/limitfixed/1.0/demo/index.html](http://gallery.kissyui.com/limitfixed/1.0/demo/index.html)
+* 版本：1.1
+* 教程：[http://gallery.kissyui.com/limitfixed/1.1/guide/index.html](http://gallery.kissyui.com/limitfixed/1.1/guide/index.html)
+* demo：[http://gallery.kissyui.com/limitfixed/1.1/demo/index.html](http://gallery.kissyui.com/limitfixed/1.1/demo/index.html)
 
 ## changelog
 
