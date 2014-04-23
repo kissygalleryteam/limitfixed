@@ -96,6 +96,9 @@
             padding: 10px;
         }
 
+        .floor {
+            position: relative;
+        }
         .floor li {
             height: 20px;
             padding: 10px;
@@ -225,9 +228,10 @@
             var $ = Node.all,
                 $wrap = $('#J_Carousel');
 
-            $wrap.all(".caption").each(function($it) {
+            $wrap.all(".caption").each(function($it, idx) {
                 new Limitfixed($it, {
                     elLimit: $it.parent(),
+                    direction: "x",
                     holder: true
                 }).render();
             });
@@ -286,10 +290,16 @@
                 $wrap = $('#J_ShelfBox');
 
             $wrap.all('.caption').each(function(it) {
-                new Limitfixed(it, {
+                var lf = new Limitfixed(it, {
                     elLimit: it.parent(),
                     holder: true
-                }).render();
+                });
+
+                lf.on('fixed', function(ev) {
+                    console.log(lf.$fixed.text(), ev.fixed);
+                });
+
+                lf.render();
             });
         })
     </script>

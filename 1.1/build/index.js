@@ -24,11 +24,12 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
         isIE6 = UA.ie === 6,
         isUndefined = S.isUndefined;
 
-    var def = {
-        direction: "y",
-        type: isIE6 ? "absolute" : "fixed",
-        elLimit: $doc
-    };
+    var DATA_STATE_STICKY = 'limitfixed-sticky',
+        def = {
+            direction: "y",
+            type: isIE6 ? "absolute" : "fixed",
+            elLimit: $doc
+        };
 
     /**
      *
@@ -55,6 +56,8 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
 
             var cfg = this.cfg,
                 $fixed = this.$fixed;
+
+            this._originOffset = $fixed.offset();
 
             this._originStyles = {
                 position: null,
@@ -83,21 +86,46 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
         },
         restore: function() {
             this.$fixed.css(this._originStyles);
+            this._originOffset = this.$fixed.offset();
         },
         scroll: function() {
-            var cfg = this.cfg;
+            var cfg = this.cfg,
+                $fixed = this.$fixed,
+                isSticky = $fixed.data(DATA_STATE_STICKY),
+                isFixed;
 
-            if(cfg.type == "fixed") {
-                this._calFixedPosition();
+            isFixed = this._calPosition();
+
+            if(isFixed) {
+
+                this._showPlaceholder();
+
+                if(!isSticky) {
+                    $fixed.data(DATA_STATE_STICKY, true);
+                    this.fire('fixed', {
+                        fixed: true
+                    });
+                }
+
+            }else {
+
+                this._hidePlaceholder();
+
+                if(isSticky) {
+                    $fixed.data(DATA_STATE_STICKY, false);
+                    this.fire('fixed', {
+                        fixed: false
+                    });
+                }
+
             }
         },
-        _calFixedPosition: function() {
+        _calPosition: function() {
             var cfg = this.cfg,
-                points = cfg.points || {},
                 direction = cfg.direction.toLowerCase(),
                 $fixed = this.$fixed,
                 range = this._getLimitRange(),
-                originOffset = $fixed.offset(),
+                originOffset = this._originOffset,
                 position = {};
 
             var originLeft = originOffset.left,
@@ -106,15 +134,15 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
             var scrollTop = $doc.scrollTop(),
                 scrollLeft = $doc.scrollLeft();
 
+            // 根据配置，计算指定方向上的坐标
             if(direction.indexOf("y") !== -1) {
                 if(scrollTop > range.top &&
                     scrollTop < range.bottom - $fixed.outerHeight()) {
 
-                    position.top = 0;
+                    position.top = scrollTop;
 
                 }else if(scrollTop > range.bottom - $fixed.outerHeight() && scrollTop < range.bottom){
-
-                    position.top = - (scrollTop - range.bottom + $fixed.outerHeight());
+                    position.top = range.bottom - $fixed.outerHeight()
                 }
             }
 
@@ -122,36 +150,80 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
                 if(scrollLeft > range.left &&
                     scrollLeft < range.right - $fixed.outerWidth()){
 
-                    position.left = 0;
+                    position.left = scrollLeft;
 
                 }else if(scrollLeft > range.right - $fixed.outerWidth() && scrollLeft < range.right) {
 
-                    position.left = - (scrollLeft - range.right + $fixed.outerWidth());
+                    position.left = range.right - $fixed.outerWidth()
                 }
             }
 
+            // 补全另一个方向的坐标。
             if(direction.indexOf("y") !== -1) {
                 if(!isUndefined(position.top) && isUndefined(position.left)) {
-                    position.left = originLeft - scrollLeft;
+                    position.left = originLeft;
                 }
             }
 
             if(direction.indexOf("x") !== -1) {
                 if(!isUndefined(position.left) && isUndefined(position.top)) {
-                    position.top = originTop - scrollTop;
+                    position.top = originTop;
                 }
             }
 
+            // absolute和fixed都会上面的基础上减去一个相对值。
+            // 最终的position才是fixed元素的left、top值。
+            var relate = this._getRelateOffset();
+
+            if(!isUndefined(relate.top) && !isUndefined(position.top)) {
+                position.top -= relate.top;
+            }
+
+            if(!isUndefined(relate.left) && !isUndefined(position.left)) {
+                position.left -= relate.left;
+            }
+
+
+            // 根据position，设置fixed元素的样式。
             if(!isUndefined(position.top) || !isUndefined(position.left)) {
                 $fixed.css(S.mix({
-                    position: "fixed"
+                    position: cfg.type
                 }, position));
 
-                this._showPlaceholder();
+                return true;
             }else {
                 $fixed.css(this._originStyles);
-                this._hidePlaceholder();
+                return false;
             }
+        },
+        _getRelateOffset: function() {
+            var cfg = this.cfg,
+                offset = {};
+
+            var scrollTop = $doc.scrollTop(),
+                scrollLeft = $doc.scrollLeft();
+
+            if(cfg.type == "fixed") {
+
+                offset = {
+                    left: scrollLeft,
+                    top: scrollTop
+                };
+
+            }else if(cfg.type == "absolute") {
+                var $relativeParent = this._getRelateElement();
+                if ($relativeParent) {
+                    offset = this._getOffset($relativeParent);
+                }
+            }
+
+            return offset;
+        },
+        _getRelateElement: function() {
+
+            return this.$fixed.parent(function(el) {
+                return S.inArray($(el).css('position'), ['relative', 'absolute']);
+            });
         },
         // 获取限制的range。
         _getLimitRange: function() {
@@ -160,12 +232,15 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
                 $limit = $$(cfg.elLimit);
 
             if(!range && $limit) {
-                range = isDocument($limit) ? {left: 0, top: 0} : $limit.offset();
+                range = this._getOffset($limit);
                 range.bottom = range.top + $limit.outerHeight();
                 range.right = range.left + $limit.outerWidth();
             }
 
             return range;
+        },
+        _getOffset: function($el) {
+            return isDocument($el) ? {left: 0, top: 0} : $el.offset();
         },
         _buildPlaceholder: function() {
             var cfg = this.cfg,
@@ -209,10 +284,12 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
     var instances = [];
 
     S.ready(function() {
-        $win.on('scroll resize', function() {
+        $win.on('scroll resize', function(ev) {
+            var type = ev.type,
+                methodName = type === "scroll" ? "scroll" : "adjust";
             S.each(instances, function(instance) {
                 if(instance.rendered) {
-                    instance.adjust();
+                    instance[methodName]();
                 }
             });
         });
