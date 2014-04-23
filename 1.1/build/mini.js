@@ -26,6 +26,7 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
         isUndefined = S.isUndefined;
 
     var def = {
+        direction: "y",
         type: isIE6 ? "absolute" : "fixed",
         elLimit: $doc
     };
@@ -51,12 +52,10 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
 
     S.augment(LimitFixed, Event.Target, {
         render: function() {
-            var cfg = this.cfg,
-                $fixed = this.$fixed,
-                offset = $fixed.offset();
+            if(this.rendered) return;
 
-            this._originTop = offset.top;
-            this._originLeft = offset.left;
+            var cfg = this.cfg,
+                $fixed = this.$fixed;
 
             this._originStyles = {
                 position: null,
@@ -73,6 +72,8 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
             if(cfg.holder) {
                 this._placeholder = this._buildPlaceholder();
             }
+
+            this.rendered = true;
 
             this.adjust();
         },
@@ -94,49 +95,58 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
         _calFixedPosition: function() {
             var cfg = this.cfg,
                 points = cfg.points || {},
+                direction = cfg.direction.toLowerCase(),
                 $fixed = this.$fixed,
-                $limit = $$(cfg.elLimit),
-                offset = this._getOffset($limit),
-                range = {};
+                range = this._getLimitRange(),
+                originOffset = $fixed.offset(),
+                position = {};
+
+            var originLeft = originOffset.left,
+                originTop = originOffset.top;
 
             var scrollTop = $doc.scrollTop(),
                 scrollLeft = $doc.scrollLeft();
 
-            offset.bottom = offset.top + $limit.outerHeight();
-            offset.right = offset.left + $limit.outerWidth();
+            if(direction.indexOf("y") !== -1) {
+                if(scrollTop > range.top &&
+                    scrollTop < range.bottom - $fixed.outerHeight()) {
 
-            if(scrollTop > offset.top &&
-                scrollTop < offset.bottom - $fixed.outerHeight()) {
+                    position.top = 0;
 
-                range.top = 0;
+                }else if(scrollTop > range.bottom - $fixed.outerHeight() && scrollTop < range.bottom){
 
-            }else if(scrollTop > offset.bottom - $fixed.outerHeight() && scrollTop < offset.bottom){
-
-                range.top = - (scrollTop - offset.bottom + $fixed.outerHeight());
+                    position.top = - (scrollTop - range.bottom + $fixed.outerHeight());
+                }
             }
 
-            if(scrollLeft > offset.left &&
-                scrollLeft < offset.right - $fixed.outerWidth()){
+            if(direction.indexOf("x") !== -1) {
+                if(scrollLeft > range.left &&
+                    scrollLeft < range.right - $fixed.outerWidth()){
 
-                range.left = 0;
+                    position.left = 0;
 
-            }else if(scrollLeft > offset.right - $fixed.outerWidth() && scrollLeft < offset.right) {
+                }else if(scrollLeft > range.right - $fixed.outerWidth() && scrollLeft < range.right) {
 
-                range.left = - (scrollLeft - offset.right + $fixed.outerWidth());
+                    position.left = - (scrollLeft - range.right + $fixed.outerWidth());
+                }
             }
 
-            if(!isUndefined(range.top) && isUndefined(range.left)) {
-                range.left = this._originLeft - scrollLeft;
+            if(direction.indexOf("y") !== -1) {
+                if(!isUndefined(position.top) && isUndefined(position.left)) {
+                    position.left = originLeft - scrollLeft;
+                }
             }
 
-            if(!isUndefined(range.left) && isUndefined(range.top)) {
-                range.top = this._originTop - scrollTop;
+            if(direction.indexOf("x") !== -1) {
+                if(!isUndefined(position.left) && isUndefined(position.top)) {
+                    position.top = originTop - scrollTop;
+                }
             }
 
-            if(!isUndefined(range.top) || !isUndefined(range.left)) {
+            if(!isUndefined(position.top) || !isUndefined(position.left)) {
                 $fixed.css(S.mix({
                     position: "fixed"
-                }, range));
+                }, position));
 
                 this._showPlaceholder();
             }else {
@@ -144,25 +154,33 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
                 this._hidePlaceholder();
             }
         },
-        _getOffset: function($el) {
+        // 获取限制的range。
+        _getLimitRange: function() {
             var cfg = this.cfg,
-                offset = isDocument($el) ? {left: 0, top: 0} : $el.offset();
+                range = cfg.range,
+                $limit = $$(cfg.elLimit);
 
-            if(cfg.type == "absolute") {
-                offset = {
-                }
+            if(!range && $limit) {
+                range = isDocument($limit) ? {left: 0, top: 0} : $limit.offset();
+                range.bottom = range.top + $limit.outerHeight();
+                range.right = range.left + $limit.outerWidth();
             }
 
-            return offset;
+            return range;
         },
         _buildPlaceholder: function() {
-            var $fixed = this.$fixed,
+            var cfg = this.cfg,
+                _placeholder = cfg.placeholder;
+
+            if(!_placeholder) {
+                var $fixed = this.$fixed;
                 _placeholder = $('<div style="visibility:hidden;margin:0;padding:0;"></div>');
 
-            _placeholder.width($fixed.outerWidth())
-                .height($fixed.outerHeight())
-                .css("float", $fixed.css("float"))
-                .insertAfter($fixed);
+                _placeholder.width($fixed.outerWidth())
+                    .height($fixed.outerHeight())
+                    .css("float", $fixed.css("float"))
+                    .insertAfter($fixed);
+            }
 
             return _placeholder;
         },
@@ -194,7 +212,9 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
     S.ready(function() {
         $win.on('scroll resize', function() {
             S.each(instances, function(instance) {
-                instance.scroll();
+                if(instance.rendered) {
+                    instance.adjust();
+                }
             });
         });
     });
