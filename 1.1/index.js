@@ -22,7 +22,8 @@ KISSY.add(function (S, Event, Node, undefined) {
         def = {
             direction: "y",
             type: isIE6 ? "absolute" : "fixed",
-            elLimit: $doc
+            elLimit: $doc,
+            clsFixed: 'fixed-sticky'
         };
 
     /**
@@ -42,16 +43,76 @@ KISSY.add(function (S, Event, Node, undefined) {
 
         this.cfg = S.merge(def, config);
 
+        this.isSticky = false;
     }
 
     S.augment(LimitFixed, Event.Target, {
         render: function() {
-            if(this.rendered) return;
+            var self = this,
+                cfg = self.cfg;
+            if(self.rendered) return;
 
+            self._saveOriginStyle();
+
+            if(cfg.holder) {
+                self._placeholder = self._buildPlaceholder();
+            }
+
+            self.on('fixed', function(ev) {
+                var method = ev.fixed ? "addClass" : "removeClass";
+                self.$fixed[method](cfg.clsFixed);
+            });
+
+            self.rendered = true;
+
+            self.resize();
+        },
+        resize: function() {
+
+            this._restore();
+
+            this.scroll();
+        },
+        scroll: function() {
             var cfg = this.cfg,
-                $fixed = this.$fixed;
+                $fixed = this.$fixed,
+                isSticky = this.isSticky,
+                position = this._calPosition();
 
-            this._originOffset = $fixed.offset();
+            if(position) {
+
+                $fixed.css(S.mix({
+                    position: cfg.type
+                }, position));
+
+                this._showPlaceholder();
+
+                if(!isSticky) {
+                    this.isSticky = true;
+
+                    this.fire('fixed', {
+                        fixed: true
+                    });
+                }
+
+            }else {
+
+                this._restore();
+
+                this._hidePlaceholder();
+
+                if(isSticky) {
+                    this.isSticky = false;
+
+                    this.fire('fixed', {
+                        fixed: false
+                    });
+                }
+
+            }
+        },
+        _saveOriginStyle: function() {
+            var $fixed = this.$fixed;
 
             this._originStyles = {
                 position: null,
@@ -64,55 +125,26 @@ KISSY.add(function (S, Event, Node, undefined) {
                     this._originStyles[style] = $fixed.css(style);
                 }
             }
-
-            if(cfg.holder) {
-                this._placeholder = this._buildPlaceholder();
-            }
-
-            this.rendered = true;
-
-            this.adjust();
         },
-        adjust: function() {
-            this.restore();
-
-            this.scroll();
-        },
-        restore: function() {
+        _restore: function() {
             this.$fixed.css(this._originStyles);
             this._originOffset = this.$fixed.offset();
         },
-        scroll: function() {
+        _buildPlaceholder: function() {
             var cfg = this.cfg,
-                $fixed = this.$fixed,
-                isSticky = $fixed.data(DATA_STATE_STICKY),
-                isFixed;
+                _placeholder = cfg.placeholder;
 
-            isFixed = this._calPosition();
+            if(!_placeholder) {
+                var $fixed = this.$fixed;
+                _placeholder = $('<div style="visibility:hidden;margin:0;padding:0;"></div>');
 
-            if(isFixed) {
-
-                this._showPlaceholder();
-
-                if(!isSticky) {
-                    $fixed.data(DATA_STATE_STICKY, true);
-                    this.fire('fixed', {
-                        fixed: true
-                    });
-                }
-
-            }else {
-
-                this._hidePlaceholder();
-
-                if(isSticky) {
-                    $fixed.data(DATA_STATE_STICKY, false);
-                    this.fire('fixed', {
-                        fixed: false
-                    });
-                }
-
+                _placeholder.width($fixed.outerWidth())
+                    .height($fixed.outerHeight())
+                    .css("float", $fixed.css("float"))
+                    .insertAfter($fixed);
             }
+
+            return _placeholder;
         },
         _calPosition: function() {
             var cfg = this.cfg,
@@ -121,9 +153,6 @@ KISSY.add(function (S, Event, Node, undefined) {
                 range = this._getLimitRange(),
                 originOffset = this._originOffset,
                 position = {};
-
-            var originLeft = originOffset.left,
-                originTop = originOffset.top;
 
             var scrollTop = $doc.scrollTop(),
                 scrollLeft = $doc.scrollLeft();
@@ -155,57 +184,52 @@ KISSY.add(function (S, Event, Node, undefined) {
             // 补全另一个方向的坐标。
             if(direction.indexOf("y") !== -1) {
                 if(!isUndefined(position.top) && isUndefined(position.left)) {
-                    position.left = originLeft;
+                    position.left = originOffset.left;
                 }
             }
 
             if(direction.indexOf("x") !== -1) {
                 if(!isUndefined(position.left) && isUndefined(position.top)) {
-                    position.top = originTop;
+                    position.top = originOffset.top;
                 }
             }
 
-            // absolute和fixed都会上面的基础上减去一个相对值。
-            // 最终的position才是fixed元素的left、top值。
+            // absolute和fixed都会上面的基础上减去一个相对偏移量值。
+            // 最终的position才是$fixed元素的left、top值。
             var relate = this._getRelateOffset();
 
-            if(!isUndefined(relate.top) && !isUndefined(position.top)) {
+            if(relate && !isUndefined(position.top)) {
                 position.top -= relate.top;
             }
 
-            if(!isUndefined(relate.left) && !isUndefined(position.left)) {
+            if(relate && !isUndefined(position.left)) {
                 position.left -= relate.left;
             }
 
-
             // 根据position，设置fixed元素的样式。
             if(!isUndefined(position.top) || !isUndefined(position.left)) {
-                $fixed.css(S.mix({
-                    position: cfg.type
-                }, position));
 
-                return true;
+                return position;
             }else {
-                $fixed.css(this._originStyles);
-                return false;
+
+                return null;
             }
         },
+        // 获取相对的偏移量。
+        // 计算得到的位置信息需要减去这些偏移量，再设置$fixed元素的位置。
         _getRelateOffset: function() {
             var cfg = this.cfg,
-                offset = {};
-
-            var scrollTop = $doc.scrollTop(),
-                scrollLeft = $doc.scrollLeft();
+                offset;
 
             if(cfg.type == "fixed") {
 
                 offset = {
-                    left: scrollLeft,
-                    top: scrollTop
+                    left: $doc.scrollLeft(),
+                    top: $doc.scrollTop()
                 };
 
             }else if(cfg.type == "absolute") {
-                var $relativeParent = this._getRelateElement();
+                var $relativeParent = getRelatePositionParent(this.$fixed);
                 if ($relativeParent) {
                     offset = this._getOffset($relativeParent);
                 }
@@ -213,13 +237,7 @@ KISSY.add(function (S, Event, Node, undefined) {
 
             return offset;
         },
-        _getRelateElement: function() {
-
-            return this.$fixed.parent(function(el) {
-                return S.inArray($(el).css('position'), ['relative', 'absolute']);
-            });
-        },
-        // 获取限制的range。
+        // 获取限制的range。包含left/right/top/bottom
         _getLimitRange: function() {
             var cfg = this.cfg,
                 range = cfg.range,
@@ -235,22 +253,6 @@ KISSY.add(function (S, Event, Node, undefined) {
         },
         _getOffset: function($el) {
             return isDocument($el) ? {left: 0, top: 0} : $el.offset();
-        },
-        _buildPlaceholder: function() {
-            var cfg = this.cfg,
-                _placeholder = cfg.placeholder;
-
-            if(!_placeholder) {
-                var $fixed = this.$fixed;
-                _placeholder = $('<div style="visibility:hidden;margin:0;padding:0;"></div>');
-
-                _placeholder.width($fixed.outerWidth())
-                    .height($fixed.outerHeight())
-                    .css("float", $fixed.css("float"))
-                    .insertAfter($fixed);
-            }
-
-            return _placeholder;
         },
         _showPlaceholder: function() {
             this._placeholder && this._placeholder.show();
@@ -271,6 +273,11 @@ KISSY.add(function (S, Event, Node, undefined) {
 //        return it === $doc.getDOMNode();
     }
 
+    function getRelatePositionParent($el) {
+        return $el.parent(function(el) {
+            return S.inArray($(el).css('position'), ['relative', 'absolute']);
+        });
+    }
 
 
     //========== export API ============
