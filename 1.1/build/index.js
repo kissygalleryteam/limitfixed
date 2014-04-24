@@ -140,8 +140,8 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
 
                 _placeholder = $('<div style="visibility:hidden;margin:0;padding:0;"></div>');
 
-                _placeholder.width($fixed.outerWidth())
-                    .height($fixed.outerHeight())
+                _placeholder.width($fixed.outerWidth(true))
+                    .height($fixed.outerHeight(true))
                     .css("float", $fixed.css("float"))
                     .insertAfter($fixed);
             }
