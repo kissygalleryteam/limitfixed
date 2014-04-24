@@ -26,7 +26,7 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
     var def = {
             direction: "y",
             type: isIE6 ? "absolute" : "fixed",
-            elLimit: $doc,
+            limit: $doc,
             holder: false,
             clsFixed: 'fixed-sticky'
         };
@@ -41,7 +41,7 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
 
         this.cfg = S.merge(def, config);
 
-        this.$limit = $$(this.cfg.elLimit);
+        this.$limit = $$(this.cfg.limit);
 
         this.isSticky = false;
     }

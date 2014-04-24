@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <title>Limitfixed的demo</title>
-    <script src="http://g.tbcdn.cn/kissy/k/1.4.1/seed-min.js" charset="utf-8"></script>
+    <script src="http://g.tbcdn.cn/kissy/k/1.4.1/seed.js" charset="utf-8"></script>
     <style type="text/css">
         body {
             padding: 0;
@@ -193,7 +193,7 @@
         <span>内容一</span><span>内容二</span><span>内容三</span><span>内容四</span>
     </div>
     <script type="text/javascript">
-        S.use('node, gallery/limitfixed/1.1/index', function (S, Node, Limitfixed) {
+        S.use('node, gallery/limitfixed/1.2/index', function (S, Node, Limitfixed) {
             var $ = Node.all,
                 $wrap = $('#J_Carousel');
 
@@ -254,12 +254,13 @@
     </div>
 
     <script>
-        S.use('node,gallery/limitfixed/1.1/index', function (S, Node, Limitfixed) {
+        S.use('node,gallery/limitfixed/1.2/index', function (S, Node, Limitfixed) {
             var $ = Node.all,
                 $wrap = $('#J_ShelfBox');
 
             $wrap.all('.caption').each(function(it) {
                 var lf = new Limitfixed(it, {
+                    point: [0, 40],
                     elLimit: it.parent(),
                     holder: true
                 });

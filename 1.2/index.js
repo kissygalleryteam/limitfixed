@@ -144,6 +144,7 @@ KISSY.add(function (S, Event, Node, undefined) {
         },
         _calPosition: function() {
             var cfg = this.cfg,
+                point = cfg.point || [],
                 direction = cfg.direction.toLowerCase(),
                 $fixed = this.$fixed,
                 range = this._getLimitRange(),
@@ -155,7 +156,7 @@ KISSY.add(function (S, Event, Node, undefined) {
 
             // 根据配置，计算指定方向上的坐标
             if(direction.indexOf("y") !== -1) {
-                if(scrollTop > range.top &&
+                if(scrollTop > range.top + (point[1] || 0) &&
                     scrollTop < range.bottom - $fixed.outerHeight()) {
 
                     position.top = scrollTop;
