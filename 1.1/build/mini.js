@@ -17,38 +17,32 @@ gallery/limitfixed/1.1/mini
  */
 KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
     var $ = Node.all,
-        $$ = Node.one,
-        UA = S.UA;
+        $$ = Node.one;
 
     var $doc = $$(document),
         $win = $$(window),
-        isIE6 = UA.ie === 6,
+        isIE6 = S.UA.ie === 6,
         isUndefined = S.isUndefined;
 
-    var DATA_STATE_STICKY = 'limitfixed-sticky',
-        def = {
+    var def = {
             direction: "y",
             type: isIE6 ? "absolute" : "fixed",
             elLimit: $doc,
+            holder: false,
             clsFixed: 'fixed-sticky'
         };
 
     /**
      *
      * @param elFixed the sticky element
-     * @param cfg     {
-     *                      range: {
-     *                          left: 0, right: 0, top:0, bottom
-     *                      },
-     *                      elLimit: "limit container"
-     *                      holder: true/false,
-     *                      cache: true/false
-     *                }
+     * @param config
      */
     function LimitFixed(elFixed, config) {
         this.$fixed = $$(elFixed);
 
         this.cfg = S.merge(def, config);
+
+        this.$limit = $$(this.cfg.elLimit);
 
         this.isSticky = false;
     }
@@ -65,6 +59,7 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
                 self._placeholder = self._buildPlaceholder();
             }
 
+            // 默认设置，在浮动时添加className。
             self.on('fixed', function(ev) {
                 var method = ev.fixed ? "addClass" : "removeClass";
                 self.$fixed[method](cfg.clsFixed);
@@ -143,6 +138,7 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
 
             if(!_placeholder) {
                 var $fixed = this.$fixed;
+
                 _placeholder = $('<div style="visibility:hidden;margin:0;padding:0;"></div>');
 
                 _placeholder.width($fixed.outerWidth())
@@ -248,7 +244,7 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
         _getLimitRange: function() {
             var cfg = this.cfg,
                 range = cfg.range,
-                $limit = $$(cfg.elLimit);
+                $limit = this.$limit;
 
             if(!range && $limit) {
                 range = this._getOffset($limit);
@@ -293,11 +289,11 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
 
     S.ready(function() {
         $win.on('scroll resize', function(ev) {
-            var type = ev.type,
-                methodName = type === "scroll" ? "scroll" : "adjust";
+            var type = ev.type;
+
             S.each(instances, function(instance) {
                 if(instance.rendered) {
-                    instance[methodName]();
+                    instance[type]();
                 }
             });
         });
