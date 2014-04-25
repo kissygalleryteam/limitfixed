@@ -20,12 +20,15 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
 
     var $doc = $$(document),
         $win = $$(window),
-        isIE6 = S.UA.ie === 6,
+        IE = S.UA.ie,
         isUndefined = S.isUndefined;
 
     var def = {
             direction: "y",
-            type: isIE6 ? "absolute" : "fixed",
+            // IE版本小于10，采用低精度模式。
+            // TODO 后续可以检测一下fps来判断。
+            accuracy: IE < 10,
+            type: IE === 6 ? "absolute" : "fixed",
             limit: $doc,
             holder: false,
             clsFixed: 'fixed-sticky'
@@ -129,7 +132,7 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
         },
         _restore: function() {
             this.$fixed.css(this._originStyles);
-            this._originOffset = this.$fixed.offset();
+            this._originFixedOffset = this._getFixedRange();
         },
         _buildPlaceholder: function() {
             var cfg = this.cfg,
@@ -151,9 +154,8 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
         _calPosition: function() {
             var cfg = this.cfg,
                 direction = cfg.direction.toLowerCase(),
-                $fixed = this.$fixed,
                 range = this._getLimitRange(),
-                originOffset = this._originOffset,
+                originOffset = this._originFixedOffset,
                 position = {};
 
             var scrollTop = $doc.scrollTop(),
@@ -162,24 +164,24 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
             // 根据配置，计算指定方向上的坐标
             if(direction.indexOf("y") !== -1) {
                 if(scrollTop > range.top &&
-                    scrollTop < range.bottom - $fixed.outerHeight()) {
+                    scrollTop < range.bottom - originOffset.outerHeight) {
 
                     position.top = scrollTop;
 
-                }else if(scrollTop > range.bottom - $fixed.outerHeight() && scrollTop < range.bottom){
-                    position.top = range.bottom - $fixed.outerHeight()
+                }else if(scrollTop > range.bottom - originOffset.outerHeight && scrollTop < range.bottom){
+                    position.top = range.bottom - originOffset.outerHeight;
                 }
             }
 
             if(direction.indexOf("x") !== -1) {
                 if(scrollLeft > range.left &&
-                    scrollLeft < range.right - $fixed.outerWidth()){
+                    scrollLeft < range.right - originOffset.outerWidth){
 
                     position.left = scrollLeft;
 
-                }else if(scrollLeft > range.right - $fixed.outerWidth() && scrollLeft < range.right) {
+                }else if(scrollLeft > range.right - originOffset.outerWidth && scrollLeft < range.right) {
 
-                    position.left = range.right - $fixed.outerWidth()
+                    position.left = range.right - originOffset.outerWidth;
                 }
             }
 
@@ -239,6 +241,15 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
 
             return offset;
         },
+        _getFixedRange: function() {
+            var $fixed = this.$fixed,
+                offset = $fixed.offset();
+
+            offset.outerHeight = $fixed.outerHeight();
+            offset.outerWidth = $fixed.outerWidth();
+
+            return offset;
+        },
         // 获取限制的range。包含left/right/top/bottom
         _getLimitRange: function() {
             var cfg = this.cfg,
@@ -284,24 +295,36 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
 
     //========== export API ============
 
-    var instances = [];
+    var highs = [],
+        lows = [];
 
     S.ready(function() {
-        $win.on('scroll resize', function(ev) {
-            var type = ev.type;
 
-            S.each(instances, function(instance) {
-                if(instance.rendered) {
-                    instance[type]();
-                }
-            });
-        });
+        function getScrollFunc(instances) {
+
+            return function(ev) {
+                var type = ev.type;
+
+                S.each(instances, function(instance) {
+                    if(instance.rendered) {
+                        instance[type]();
+                    }
+                });
+            }
+        }
+
+        $win.on('scroll resize', S.throttle(getScrollFunc(lows), 150));
+        $win.on('scroll resize', getScrollFunc(highs));
     });
 
     return function(elFixed, cfg) {
         var instance = new LimitFixed(elFixed, cfg);
 
-        instances.push(instance);
+        if(instance.cfg.accuracy) {
+            highs.push(instance);
+        }else {
+            lows.push(instance);
+        }
 
         return instance;
     };
