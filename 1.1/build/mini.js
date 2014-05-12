@@ -24,6 +24,16 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
         IE = S.UA.ie,
         isUndefined = S.isUndefined;
 
+    // 测试，非static的元素。获取的bottom值是否为auto。
+    // firefox的兼容问题。
+    function testRelativeElementBottom() {
+        var $target = $('<div style="position:relative;"></div>').appendTo(document.body);
+
+        return $target.css('bottom') !== "auto";
+    }
+
+    var needFixRelativeElementBottom = testRelativeElementBottom();
+
     var def = {
             direction: "y",
             // IE版本小于10，采用低精度模式。
@@ -125,10 +135,27 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
                 bottom: null,
                 left: null
             };
+
+            // 目前发现，firefox下。若position为非static时。即时没有设置bottom，用kissy获取bottom值时，bottom为"0px"。这会导致做样式还原处理时出现一些意外。
+            // 故，这里记录下原始的position并设置为static，以便获取位置信息。最后再还原position。
+            var needfix = false,
+                oldPosition = $fixed.css('position');
+            if(needFixRelativeElementBottom && oldPosition !== "static") {
+                needfix = true;
+            }
+
+            if(needfix) {
+                $fixed.css('position', "static");
+            }
+
             for (var style in this._originStyles) {
                 if (this._originStyles.hasOwnProperty(style)) {
                     this._originStyles[style] = $fixed.css(style);
                 }
+            }
+
+            if(needfix) {
+                $fixed.css('position', oldPosition);
             }
         },
         _restore: function() {
