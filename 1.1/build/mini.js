@@ -17,11 +17,12 @@ gallery/limitfixed/1.1/mini
  */
 KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
     var $ = Node.all,
-        $$ = Node.one;
+        $$ = Node.one,
+        UA = S.UA;
 
     var $doc = $$(document),
         $win = $$(window),
-        IE = S.UA.ie,
+        IE = UA.ie,
         isUndefined = S.isUndefined;
 
     // 测试，非static的元素。获取的bottom值是否为auto。
@@ -32,7 +33,7 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
         return $target.css('bottom') !== "auto";
     }
 
-    var needFixRelativeElementBottom = testRelativeElementBottom();
+    var needFixRelativeElementBottom = UA.firefox && testRelativeElementBottom();
 
     var def = {
             direction: "y",
