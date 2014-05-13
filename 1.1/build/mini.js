@@ -39,7 +39,7 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
             direction: "y",
             // IE版本小于10，采用低精度模式。
             // TODO 后续可以检测一下fps来判断。
-            accuracy: IE < 10,
+            accuracy: !IE || IE > 10,
             type: IE === 6 ? "absolute" : "fixed",
             limit: $doc,
             holder: false,
