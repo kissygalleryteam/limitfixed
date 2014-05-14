@@ -338,12 +338,12 @@ KISSY.add(function (S, Event, Node, undefined) {
                     timer && timer.cancel();
                     timer = S.later(function() {
                         window.scrollBy(0, 1);
-                    }, 500);
+                    }, 200);
                 }
             }
         }
 
-        $win.on('scroll resize', S.throttle(getScrollFunc(lows), 150));
+        $win.on('scroll resize', S.throttle(getScrollFunc(lows), 120));
         $win.on('scroll resize', getScrollFunc(highs));
     });
 
