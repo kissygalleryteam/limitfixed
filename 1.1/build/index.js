@@ -327,6 +327,7 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
         lows = [];
 
     S.ready(function() {
+        var timer;
 
         function getScrollFunc(instances) {
 
@@ -338,6 +339,13 @@ KISSY.add('gallery/limitfixed/1.1/index',function (S, Event, Node, undefined) {
                         instance[type]();
                     }
                 });
+
+                if(UA.chrome && $win.scrollTop() === 0) {
+                    timer && timer.cancel();
+                    timer = S.later(function() {
+                        window.scrollBy(0, 1);
+                    }, 500);
+                }
             }
         }
 
