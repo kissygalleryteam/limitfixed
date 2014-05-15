@@ -122,10 +122,10 @@ KISSY.add(function (S, Event, Node, undefined) {
             var $fixed = this.$fixed;
 
             this._originStyles = {
-                position: null,
                 top: null,
                 bottom: null,
-                left: null
+                left: null,
+                right: null
             };
 
             // 目前发现，firefox下。若position为非static时。即时没有设置bottom，用kissy获取bottom值时，bottom为"0px"。这会导致做样式还原处理时出现一些意外。[issues](https://github.com/kissyteam/kissy/issues/620)
@@ -145,6 +145,8 @@ KISSY.add(function (S, Event, Node, undefined) {
                     this._originStyles[style] = $fixed.css(style);
                 }
             }
+
+            this._originStyles.position = oldPosition;
 
             if(needfix) {
                 $fixed.css('position', oldPosition);
