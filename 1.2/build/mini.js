@@ -1,3 +1,10 @@
+/*
+combined files : 
+
+gallery/limitfixed/1.2/index
+gallery/limitfixed/1.2/mini
+
+*/
 /**
  * @fileoverview
  * @author 阿克<ake.wgk@taobao.com>
@@ -8,7 +15,7 @@
  * new LimitFixed($fix, cfg);
  *
  */
-KISSY.add(function (S, Event, Node, undefined) {
+KISSY.add('gallery/limitfixed/1.2/index',function (S, Event, Node, undefined) {
     var $ = Node.all,
         $$ = Node.one,
         UA = S.UA;
@@ -346,3 +353,15 @@ KISSY.add(function (S, Event, Node, undefined) {
     };
 
 }, {requires:['event', 'node']});
+/**
+ * @fileoverview 
+ * @author 阿克<ake.wgk@taobao.com>
+ * @module limitfixed
+ **/
+KISSY.add('gallery/limitfixed/1.2/mini',function(S, Component) {
+
+  return Component;
+
+}, {
+  requires: ["./index"]
+});

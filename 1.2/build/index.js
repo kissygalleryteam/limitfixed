@@ -1,3 +1,9 @@
+/*
+combined files : 
+
+gallery/limitfixed/1.2/index
+
+*/
 /**
  * @fileoverview
  * @author 阿克<ake.wgk@taobao.com>
@@ -8,7 +14,7 @@
  * new LimitFixed($fix, cfg);
  *
  */
-KISSY.add(function (S, Event, Node, undefined) {
+KISSY.add('gallery/limitfixed/1.2/index',function (S, Event, Node, undefined) {
     var $ = Node.all,
         $$ = Node.one,
         UA = S.UA;

@@ -199,7 +199,7 @@
 
             $wrap.all(".caption").each(function($it, idx) {
                 new Limitfixed($it, {
-                    elLimit: $it.parent(),
+                    limit: $it.parent(),
                     direction: "x",
                     holder: true
                 }).render();
@@ -261,14 +261,14 @@
             $wrap.all('.caption').each(function(it) {
                 var lf = new Limitfixed(it, {
                     point: [0, 40],
-                    elLimit: it.parent(),
+                    limit: it.parent(),
                     holder: true
                 });
 
                 lf.on('fixed', function(ev) {
                     S.log(lf.$fixed.text(), ev.fixed);
                 });
-
+debugger;
                 lf.render();
             });
         })
