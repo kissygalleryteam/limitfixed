@@ -14,6 +14,7 @@ Limitfixed是。
             limit: '$container',
             holder: true/false
          });
+         limitfixed.render();
     });
 ````
 
@@ -36,6 +37,7 @@ KISSY.use("gallery/limitfixed/1.2/", function(S, LimitFixed) {
 		// <Element|Node> 浮动时用于占位的元素。默认自动创建，也可以传入指定的元素作为占位元素（指定元素的样式和位置不会动）。
 		placeholder: $holder
 	});
+	lf.render()
 })
 ```
 
